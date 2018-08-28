@@ -200,7 +200,7 @@ bool ScanRegistration::setup(ros::NodeHandle& node,
   _imuHistory.ensureCapacity(_config.imuHistorySize);
 
   // subscribe to IMU topic
-  _subImu = node.subscribe<sensor_msgs::Imu>("/imu/data", 50, &ScanRegistration::handleIMUMessage, this);
+  _subImu = node.subscribe<sensor_msgs::Imu>("/imu/data1", 50, &ScanRegistration::handleIMUMessage, this);
 
 
   // advertise scan registration topics
@@ -224,10 +224,14 @@ void ScanRegistration::handleIMUMessage(const sensor_msgs::Imu::ConstPtr& imuIn)
   tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
 
   Vector3 acc;
-  acc.x() = float(imuIn->linear_acceleration.y - sin(roll) * cos(pitch) * 9.81);
-  acc.y() = float(imuIn->linear_acceleration.z - cos(roll) * cos(pitch) * 9.81);
-  acc.z() = float(imuIn->linear_acceleration.x + sin(pitch) * 9.81);
-
+  acc.x() = float(imuIn->linear_acceleration.y - sin(roll) * cos(pitch) * 9.87);
+  acc.y() = float(imuIn->linear_acceleration.z - cos(roll) * cos(pitch) * 9.87);
+  acc.z() = float(imuIn->linear_acceleration.x + sin(pitch) * 9.87);
+  //ROS_INFO(" ");
+  //ROS_INFO("roll=%f,pitch=%f,yaw=%f",roll,pitch,yaw);
+  //ROS_INFO("w=%3f,x=%3f,y=%3f,z=%3f",imuIn->orientation.w,imuIn->orientation.x,imuIn->orientation.y,imuIn->orientation.z);
+  //ROS_INFO("IMUaccx=%f,accy=%f,accz=%f",imuIn->linear_acceleration.x,imuIn->linear_acceleration.y,imuIn->linear_acceleration.z);
+  //ROS_INFO("accx=%f,accy=%f,accz=%f",acc.x(),acc.y(),acc.z());
   IMUState newState;
   newState.stamp = imuIn->header.stamp;
   newState.roll = roll;
@@ -348,7 +352,7 @@ void ScanRegistration::extractFeatures(const uint16_t& beginIdx)
     }*/
 
     // reset scan buffers
-    setScanBuffersFor(scanStartIdx, scanEndIdx);
+    setScanBuffersFor(scanStartIdx, scanEndIdx);//* Make unreliable point in paper (a) (b)
 
     // extract features from equally sized scan regions
     for (int j = 0; j < _config.nFeatureRegions; j++) {
@@ -365,7 +369,7 @@ void ScanRegistration::extractFeatures(const uint16_t& beginIdx)
       size_t regionSize = ep - sp + 1;
 
       // reset region buffers
-      setRegionBuffersFor(sp, ep);
+      setRegionBuffersFor(sp, ep);//*calculate point curvatures and reset sort indices
 
 
       // extract corner features
@@ -387,7 +391,7 @@ void ScanRegistration::extractFeatures(const uint16_t& beginIdx)
           }
           _cornerPointsLessSharp.push_back(_laserCloud[idx]);
 
-          markAsPicked(idx, scanIdx);
+          markAsPicked(idx, scanIdx);//* Mark befor and under 5 points 
         }
       }
 
@@ -429,7 +433,7 @@ void ScanRegistration::extractFeatures(const uint16_t& beginIdx)
 }
 
 
-
+// calculate point curvatures and reset sort indices
 void ScanRegistration::setRegionBuffersFor(const size_t& startIdx,
                                            const size_t& endIdx)
 {
@@ -468,7 +472,7 @@ void ScanRegistration::setRegionBuffersFor(const size_t& startIdx,
 }
 
 
-
+// mark unreliable points as picked in paper (a) (b)
 void ScanRegistration::setScanBuffersFor(const size_t& startIdx,
                                          const size_t& endIdx)
 {
@@ -515,7 +519,7 @@ void ScanRegistration::setScanBuffersFor(const size_t& startIdx,
 }
 
 
-
+//Make befor and flow 5 points
 void ScanRegistration::markAsPicked(const size_t& cloudIdx,
                                     const size_t& scanIdx)
 {

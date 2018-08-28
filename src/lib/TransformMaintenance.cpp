@@ -196,6 +196,9 @@ void TransformMaintenance::laserOdometryHandler(const nav_msgs::Odometry::ConstP
   geoQuat = tf::createQuaternionMsgFromRollPitchYaw
       (_transformMapped[2], -_transformMapped[0], -_transformMapped[1]);
 
+ //ROS_INFO("Inte_ roll=%f,pitch=%f,yaw=%f",roll,pitch,yaw);
+ //ROS_INFO("Inte_ x=%f,y=%f,z=%f",_transformSum[3],_transformSum[4],_transformSum[5]);
+
   _laserOdometry2.header.stamp = laserOdometry->header.stamp;
   _laserOdometry2.pose.pose.orientation.x = -geoQuat.y;
   _laserOdometry2.pose.pose.orientation.y = -geoQuat.z;

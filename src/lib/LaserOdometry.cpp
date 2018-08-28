@@ -75,7 +75,7 @@ LaserOdometry::LaserOdometry(const float& scanPeriod,
   _laserOdometryMsg.child_frame_id = "/laser_odom";
 
   _laserOdometryTrans.frame_id_ = "/camera_init";
-  _laserOdometryTrans.child_frame_id_ = "/laser_odom";
+  _laserOdometryTrans.child_frame_id_ = "/laser_odom1";
 }
 
 
@@ -96,6 +96,7 @@ bool LaserOdometry::setup(ros::NodeHandle &node,
       ROS_INFO("Set scanPeriod: %g", fParam);
     }
   }
+  
 
   if (privateNode.getParam("ioRatio", iParam)) {
     if (iParam < 1) {

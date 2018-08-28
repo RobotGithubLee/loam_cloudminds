@@ -30,8 +30,8 @@
 //   J. Zhang and S. Singh. LOAM: Lidar Odometry and Mapping in Real-time.
 //     Robotics: Science and Systems Conference (RSS). Berkeley, CA, July 2014.
 
-#ifndef LOAM_LASERMAPPING_H
-#define LOAM_LASERMAPPING_H
+#ifndef LOAM_LASERMAPPINGL_H
+#define LOAM_LASERMAPPINGL_H
 
 
 #include "Twist.h"
@@ -47,8 +47,13 @@
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
 
+#include <fstream>
+#include <iostream>
+#include <string>
 
-namespace loam {
+
+namespace loam{
+using namespace std;
 
 /** IMU state data. */
 typedef struct IMUState2 {
@@ -85,9 +90,9 @@ typedef struct IMUState2 {
 /** \brief Implementation of the LOAM laser mapping component.
  *
  */
-class LaserMapping {
+class LaserMappingSelf {
 public:
-  explicit LaserMapping(const float& scanPeriod = 0.1,
+  explicit LaserMappingSelf(const float& scanPeriod = 0.1,
                         const size_t& maxIterations = 10);
 
   /** \brief Setup component in active mode.
@@ -97,6 +102,19 @@ public:
    */
   virtual bool setup(ros::NodeHandle& node,
                      ros::NodeHandle& privateNode);
+  
+  /** \brief Handler method for a corner map cloud.
+  *
+  * @param cornerPointsLastMsg the corner  map cloud message
+  */
+  void laserCloudSurroudCornerHandler(const sensor_msgs::PointCloud2ConstPtr& CloudsurroudCornerMsg);
+  
+  /** \brief Handler method for a Surf map cloud.
+  *
+  * @param surfacePointsLastMsg the Surf map cloud message
+  */
+void laserCloudSurroudSurfHandler(const sensor_msgs::PointCloud2ConstPtr& CloudsurroudSurfMsg);
+  
 
   /** \brief Handler method for a new last corner cloud.
    *
@@ -161,22 +179,7 @@ private:
     return i + _laserCloudWidth * j + _laserCloudWidth * _laserCloudHeight * k;
   }
 
-  /****************sub map**********************/
-  pcl::PointXYZI pointSelSumCorer;
-  pcl::PointXYZI pointSelSumSurf;
-  int size_submap;
-  int size_cloudCount;
-  float sumDistance;
-  float deltaDistance;
-  pcl::PointCloud<pcl::PointXYZI>::Ptr _subMapCloudCorner;
-  
-  std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> _subMapCloudCornerArray;
-  std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> _subMapCloudSurfArray;
-  std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> _subMapCloudCornerDSArray;  ///< down sampled
-  std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> _subMapCloudSurfDSArray;    ///< down sampled
-  /**************************************/
-  
-  
+  ofstream inStream;
   float _scanPeriod;          ///< time per scan
   const int _stackFrameNum;
   const int _mapFrameNum;
@@ -195,6 +198,7 @@ private:
   const size_t _laserCloudDepth;
   const size_t _laserCloudNum;
 
+  pcl::PointCloud<pcl::PointXYZI>::Ptr _laserCloudSurroud;   ///< surroud points cloud
   pcl::PointCloud<pcl::PointXYZI>::Ptr _laserCloudCornerLast;   ///< last corner points cloud
   pcl::PointCloud<pcl::PointXYZI>::Ptr _laserCloudSurfLast;     ///< last surface points cloud
   pcl::PointCloud<pcl::PointXYZI>::Ptr _laserCloudFullRes;      ///< last full resolution cloud
@@ -204,25 +208,23 @@ private:
   pcl::PointCloud<pcl::PointXYZI>::Ptr _laserCloudCornerStackDS;  ///< down sampled
   pcl::PointCloud<pcl::PointXYZI>::Ptr _laserCloudSurfStackDS;    ///< down sampled
 
-  pcl::PointCloud<pcl::PointXYZI>::Ptr _laserCloudCorner; //******
-  pcl::PointCloud<pcl::PointXYZI>::Ptr _laserCloudSurf; //******
-  
   pcl::PointCloud<pcl::PointXYZI>::Ptr _laserCloudSurround;
   pcl::PointCloud<pcl::PointXYZI>::Ptr _laserCloudSurroundDS;     ///< down sampled
   pcl::PointCloud<pcl::PointXYZI>::Ptr _laserCloudCornerFromMap;
   pcl::PointCloud<pcl::PointXYZI>::Ptr _laserCloudSurfFromMap;
+  
+  pcl::PointCloud<pcl::PointXYZI>::Ptr _laserCloudCornerFromMapSub;//******************
+  pcl::PointCloud<pcl::PointXYZI>::Ptr _laserCloudSurfFromMapSub;  //*******************
 
   std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> _laserCloudCornerArray;
   std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> _laserCloudSurfArray;
   std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> _laserCloudCornerDSArray;  ///< down sampled
   std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> _laserCloudSurfDSArray;    ///< down sampled
-  
-
-  
 
   std::vector<size_t> _laserCloudValidInd;
   std::vector<size_t> _laserCloudSurroundInd;
 
+  ros::Time _timeLaserCloudsurroud;   ///< time of current last corner cloud
   ros::Time _timeLaserCloudCornerLast;   ///< time of current last corner cloud
   ros::Time _timeLaserCloudSurfLast;     ///< time of current last surface cloud
   ros::Time _timeLaserCloudFullRes;      ///< time of current full resolution cloud
@@ -248,15 +250,14 @@ private:
   nav_msgs::Odometry _odomAftMapped;      ///< mapping odometry message
   tf::StampedTransform _aftMappedTrans;   ///< mapping odometry transformation
 
-  ros::Publisher _pubLaserCloudCorner;    ///< Corner cloud message publisher*******
-  ros::Publisher _pubLaserCloudSurf;    ///< Surf cloud message publisher*******
-  
-  
   ros::Publisher _pubLaserCloudSurround;    ///< map cloud message publisher
   ros::Publisher _pubLaserCloudFullRes;     ///< current full resolution cloud message publisher
   ros::Publisher _pubOdomAftMapped;         ///< mapping odometry publisher
   tf::TransformBroadcaster _tfBroadcaster;  ///< mapping odometry transform broadcaster
 
+  ros::Subscriber _subbLaserCloudSurroundCorner;//***************************
+  ros::Subscriber _subbLaserCloudSurroundSurf; //****************************
+  
   ros::Subscriber _subLaserCloudCornerLast;   ///< last corner cloud message subscriber
   ros::Subscriber _subLaserCloudSurfLast;     ///< last surface cloud message subscriber
   ros::Subscriber _subLaserCloudFullRes;      ///< full resolution cloud message subscriber

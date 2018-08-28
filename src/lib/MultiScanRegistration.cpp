@@ -60,7 +60,7 @@ void MultiScanMapper::set(const float &lowerBound,
 }
 
 
-
+//get line of point by angle 
 int MultiScanMapper::getRingForAngle(const float& angle) {
   return int(((angle * 180 / M_PI) - _lowerBound) * _factor + 0.5);
 }
@@ -233,7 +233,7 @@ void MultiScanRegistration::process(const pcl::PointCloud<pcl::PointXYZ>& laserC
       transformToStartIMU(point);
     }
 
-    laserCloudScans[scanID].push_back(point);
+    laserCloudScans[scanID].push_back(point);// put points in diff sancID 
   }
 
   // construct sorted full resolution cloud
